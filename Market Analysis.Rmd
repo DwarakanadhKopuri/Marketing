@@ -1,0 +1,627 @@
+---
+title: "Market"
+output: html_document
+---
+```{r}
+rm(list = ls(all=TRUE))
+```
+
+
+```{r}
+setwd("F:\\FD\\Info\\Intern")
+```
+
+```{r}
+market <- read.csv("Bank Market .csv",header = TRUE,sep = ",",na.strings = "NA")
+
+```
+
+```{r}
+head(market)
+tail(market)
+```
+
+```{r}
+summary(market)
+```
+
+```{r}
+sum(is.na(market))
+```
+
+```{r}
+str(market)
+```
+
+```{r}
+sapply(market, class)
+levels(market$housing)
+```
+
+```{r}
+#as.numeric function to convert the change the factor values to numeric
+market$age <- as.numeric(market$age)
+market$duration <- as.numeric(market$duration)
+market$campaign <- as.numeric(market$campaign)
+market$pdays <- as.numeric(market$pdays)
+market$previous <- as.numeric(market$previous)
+market$emp.var.rate <- as.numeric(market$emp.var.rate)
+market$cons.price.idx <- as.numeric(market$cons.price.idx)
+market$cons.conf.idx <- as.numeric(market$cons.conf.idx)
+market$euribor3m <- as.numeric(market$euribor3m)
+market$nr.employed <- as.numeric(market$nr.employed)
+
+summary(market)
+```
+
+```{r}
+hist(market$age, freq = FALSE,col=terrain.colors(10))
+```
+
+
+```{r}
+## Removing Constant Variables and checking Non-Zero Variance in the data and removing
+library(caret)
+library(DMwR)
+library(lda)
+library(MASS)
+cd <- lda(y~.,data = market)
+cd
+```
+
+```{r}
+library(ggplot2)
+hist(market$duration,col = "green")
+hist(market$campaign)
+table(market$y)
+
+## Class Imbalance 
+
+```
+
+```{r}
+mean(market$age)
+median(market$age)
+sd(market$age)
+min(market$age)
+max(market$age)
+sum(is.na(market$age))
+```
+
+```{r}
+mean(market$duration)
+median(market$duration)
+sd(market$duration)
+min(market$duration)
+max(market$duration)
+
+```
+
+```{r}
+mean(market$campaign)
+median(market$campaign)
+sd(market$campaign)
+min(market$campaign)
+max(market$campaign)
+```
+
+```{r}
+mean(market$pdays)
+median(market$pdays)
+sd(market$pdays)
+min(market$pdays)
+max(market$pdays)
+
+```
+
+```{r}
+mean(market$previous)
+median(market$previous)
+sd(market$previous)
+min(market$previous)
+max(market$previous)
+```
+
+```{r}
+mean(market$cons.price.idx)
+median(market$cons.conf.idx)
+sd(market$cons.conf.idx)
+min(market$cons.conf.idx)
+max(market$cons.conf.idx)
+str(market)
+```
+
+```{r}
+table(market$contact)
+plot(market$contact,col="skyblue")
+```
+
+```{r}
+table(market$poutcome)
+plot(market$poutcome,col="brown")
+```
+
+```{r}
+table(market$housing)
+plot(market$housing,col=terrain.colors(3))
+```
+
+```{r}
+table(market$loan)
+plot(market$loan,col=terrain.colors(3))
+
+```
+
+```{r}
+table(market$job)
+plot(market$job,col=terrain.colors(6))
+```
+
+```{r}
+ggplot(market,aes(x=job)) + geom_bar() +
+        xlab("job") + ylab("Marketing")  +
+        ggtitle("Marketing")+
+     geom_text(stat='count',aes(label=..count..),vjust=0)
+```
+
+```{r}
+ggplot(market,aes(x=job,fill=y)) + 
+        geom_bar(width = 0.5, colour = "black" ) +
+        xlab("job") + ylab("# y")  +
+        ggtitle("Various Categories")
+```
+
+
+```{r}
+par(mfrow= c(2,2))
+ggplot(market, aes(loan, fill=y ) ) +
+  geom_bar(position="dodge")
+
+ggplot(market, aes(age, fill=y ) ) +
+  geom_bar(position="dodge")
+
+ggplot(market, aes(job, fill=y ) ) +
+  geom_bar(position="dodge")
+
+ggplot(market, aes(education, fill=y ) ) +
+  geom_bar(position="dodge")
+
+ggplot(market, aes(marital, fill=y ) ) +
+  geom_bar(position="dodge")
+ggplot(market, aes(day_of_week, fill=y ) ) +
+  geom_bar(position="dodge")
+ggplot(market, aes(month, fill=y ) ) +
+  geom_bar(position="dodge")
+ggplot(market,aes(education ,fill=y))+
+    geom_bar(position = "dodge")
+
+```
+
+```{r}
+ggplot(market, aes(job) ) +
+  geom_bar() + facet_grid(y ~ .,)
+```
+
+```{r}
+ggplot(market, aes(job)) +
+  geom_density()
+```
+```{r}
+ggplot(market, aes(loan) ) +
+  geom_bar() + facet_grid(y ~ .)
+```
+
+```{r}
+## Experimental model building
+size <- nrow(market) * 0.8
+validation_index <- sample(1:nrow(market), size = size)
+test<- market[-validation_index,]
+train <- market[validation_index,]
+```
+
+```{r}
+##Modeling
+##A Decision Tree is a robust and transparent Machine Learning model. The tree starts with a single node and then branches out, with a decision being made at every branch point. To plot some good decision trees for our Bank Marketing Data we need to load the following libraries. It can be used to predict whether a particular variable would have mattered in the customer's decision to subscribe or not to the bank's term deposit.
+
+library(rpart)
+#install.packages(c("rpart","rpart.plot","rattle"))
+library(rpart)
+library(rpart.plot)
+library(rattle)
+```
+
+```{r}
+train$y <-as.factor(train$y)
+library(DMwR)
+library(caret)
+marketmodel<- rpart(y ~ ., data =train)
+fancyRpartPlot(marketmodel)
+
+
+predsRF <- predict(marketmodel, test)
+
+predsrf_tree<-ifelse(predsRF[,2] > predsRF[,1] ,"yes","no")
+
+str(predsRF)
+##f<-data.frame(predsRF)
+confusionMatrix(predsrf_tree, test$y)
+
+library(ROCR)
+prob_trainrf <- predict(marketmodel, type = "class")
+
+predrf <- prediction(as.numeric(prob_trainrf), as.numeric(train$y))
+perf <- performance(predrf, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(predrf, measure="auc")
+
+aucrf <- perf_auc@y.values[[1]]
+aucrf
+```
+
+```{r}
+library(randomForest)
+model_rf1 <- randomForest(y ~ . , train)
+##importance(model_rf)
+
+preds_rf1 <- predict(model_rf1, test)
+
+confusionMatrix(preds_rf1, test$y)
+
+prob_train2r <- predict(model_rf1, type = "response")
+
+pred2r <- prediction(as.numeric(prob_train2r), as.numeric(train$y))
+perf <- performance(pred2r, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred2r, measure="auc")
+
+auc2r <- perf_auc@y.values[[1]]
+auc2r
+
+```
+
+```{r}
+library(e1071)
+
+model_svm1 <- svm(y ~ . , train, kernel = "linear")
+
+summary(model_svm1)
+
+preds_svm1 <- predict(model_svm1, test)
+
+confusionMatrix(preds_svm1, test$y)
+prob_trainSVM <- predict(model_svm1, type = "class")
+
+install.packages(ROCR)
+library(ROCR)
+
+predsvm <- prediction(as.numeric(prob_trainSVM), as.numeric(train$y))
+perf <- performance(predsvm, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(predsvm, measure="auc")
+
+aucsvm <- perf_auc@y.values[[1]]
+aucsvm
+```
+
+```{r}
+log_reg <- glm(y~., data = train, family = binomial)
+prob_train1 <- predict(log_reg, type = "response")
+
+library(ROCR)
+
+predglm <- prediction(prob_train1, train$y)
+perf <- performance(predglm, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(predglm, measure="auc")
+
+aucglm <- perf_auc@y.values[[1]]
+aucglm
+```
+
+```{r}
+library(ipred)
+set.seed(1234)
+
+model_tree_bag1 <- bagging(y ~ . , data=train, control = rpart.control(cp = 0.01, xval = 10))
+##Test the model on the validation data and store the predictions on both the test and validation data
+preds_tree_bag1 <- predict(model_tree_bag1, test)
+
+confusionMatrix(preds_tree_bag1, test$y)
+
+prob_trainbg <- predict(model_tree_bag1, type = "class")
+
+install.packages(ROCR)
+library(ROCR)
+
+predbg <- prediction(as.numeric(prob_trainbg), as.numeric(train$y))
+perf <- performance(predbg, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(predbg, measure="auc")
+
+aucbg <- perf_auc@y.values[[1]]
+aucbg
+```
+
+```{r}
+
+```
+
+```{r}
+par(mfrow=c(2,2))
+library(dplyr)
+library(psych)
+
+##pairs.panels(market,smooth = TRUE,scale = FALSE)
+
+```
+
+```{r}
+smothe_data = SMOTE(y~., data=train, perc.over = 100,perc.under = 150,k=5, learner = NULL)
+table(smothe_data$y)
+```
+
+```{r}
+##Rose 
+library(ROSE)
+##Option "over" determines simple oversampling with replacement from the minority class until either the specified sample size N is reached or the positive examples have probability p of occurrence. Thus, when method = "over", an augmented sample is returned. Since the prevalent class amounts to 12598 observations, to obtain a balanced sample by oversampling, we need to set the new sample size to 25196
+
+data.bal.ov.N <- ovun.sample(y ~ ., data = train, method = "over",
+N = 82376)$data
+table(data.bal.ov.N$y)
+```
+
+```{r}
+##Function ovun.sample returns an object of class list whose elements are the matched call, the method for data balancing, and the new set of balanced data, which has been directly extracted here. Alternatively,we may design the oversampling by setting argument p, which represents the probability of thepositive class in the new augmented sample. In this case, the proportion of positive examples will be only approximatively equal to the specified p.
+data.bal.ov.p <- ovun.sample(y ~ ., data = train, method = "over",
+p = 0.5)$data
+table(data.bal.ov.p$y)
+```
+
+```{r}
+#In general, a reader who executes this code would obtain a different distribution of the two classes,because of the randomness of the data generation. To keep trace of the generated sample, a seed may be specified:
+data.bal.ov <- ovun.sample(y ~ ., data = train, method = "over",
+p = 0.5, seed = 1)$data
+table(data.bal.ov$y)
+```
+
+```{r}
+#The code chunks above also show how to instruct function ovun.sample to recognize the different roles of the column data, namely through the specification of the first argument formula. This expects the response variable cls on the left-hand side and the predictors on the right-hand side, in the guise of most R regression and classification routines. As usual, the '.' has to be interpreted as 'all columns not otherwise in the formula'. Similar to option "over", option "under" determines simple undersampling without replacement of the majority class until either the specified sample size N is reached or the positive examples has probability p of occurring. It then turns out that when method = "under", a sample of reduced size is returned. For example, if we set p, then
+data.bal.un <- ovun.sample(y ~ ., data = train, method = "under",
+p = 0.5, seed = 1)$data
+table(data.bal.un$y)
+```
+
+```{r}
+#When method = "both" is selected, both the minority class is oversampled with replacement and the majority class is undersampled without replacement. In this case, both the arguments N and p have to be set to establish the amount of oversampling and undersampling. Essentially, the minority class is oversampled to reach a size determined as a realization of a binomial random variable with size N and probability p. Undersampling is then performed accordingly, to abide by the specified N.
+data.bal.ou <- ovun.sample(y ~ ., data = train, method = "both",
+N = 1000, p = 0.5, seed = 1)$data
+table(data.bal.ou$y)
+```
+
+```{r}
+##From a qualitative viewpoint, these strategies produce rather different artificial data sets. A flavor of these differences is illustrated where the outcome of running the options of function ovun.sample on data train is displayed. Each observation appearing in the resulting balanced data set is represented by a point whose size is proportional to the number of ties.Oversampling produces a considerable amount of repeated observations among the rare examples, while undersampling excludes a large number of observations from the prevalent class. A combination of over- and undersampling is a compromise between the two, but still produces several ties for the minority examples when the original training set size is large and the imbalance is extreme. Data generation according to ROSE attempts to circumvent the pitfalls of the resampling methods above by drawing a new, synthetic, possibly balanced, set of data from the two conditional kernel density estimates of the classes. Endowed with arguments formula, data, N, and p, function ROSE shares most of its usage with ovun.sample:
+```
+
+
+```{r}
+library(randomForest)
+model_rf <- randomForest(y ~ . , smothe_data)
+importance(model_rf)
+
+preds_rf <- predict(model_rf, test)
+
+confusionMatrix(preds_rf, test$y)
+
+
+
+
+```
+
+```{r}
+library(ROCR)
+prob_train2 <- predict(model_rf, type = "response")
+
+pred2 <- prediction(as.numeric(prob_train2), as.numeric(smothe_data$y))
+perf <- performance(pred2, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred2, measure="auc")
+
+auc2 <- perf_auc@y.values[[1]]
+auc2
+```
+
+```{r}
+library(e1071)
+
+model_svm <- svm(y ~ . , smothe_data, kernel = "linear")
+
+summary(model_svm)
+
+preds_svm <- predict(model_svm, test)
+
+confusionMatrix(preds_svm, test$y)
+prob_trainSVM <- predict(model_svm, type = "class")
+
+install.packages(ROCR)
+library(ROCR)
+
+pred9 <- prediction(as.numeric(prob_trainSVM), as.numeric(smothe_data$y))
+perf <- performance(pred9, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred9, measure="auc")
+
+auc9 <- perf_auc@y.values[[1]]
+auc9
+```
+
+```{r}
+log_reg <- glm(y~., data = smothe_data, family = binomial)
+prob_train <- predict(log_reg, type = "response")
+
+library(ROCR)
+
+pred <- prediction(prob_train, smothe_data$y)
+perf <- performance(pred, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred, measure="auc")
+
+auc <- perf_auc@y.values[[1]]
+auc
+```
+
+```{r}
+test$y <- as.factor(test$y)
+library(caret)
+library(rpart)
+model_dt <- rpart(y ~ . , smothe_data)
+##The predictions here too are probabilities for each of the two classes in the target variable
+preds_dt <- predict(model_dt, test)
+
+preds_tree <- ifelse(preds_dt[, 1] > preds_dt[, 2], "no","yes")
+str(preds_tree)
+levels(test$y)
+confusionMatrix(preds_tree, test$y)
+
+prob_train3 <- predict(model_rf, type = "response")
+
+install.packages(ROCR)
+library(ROCR)
+
+pred3 <- prediction(as.numeric(prob_train3), as.numeric(smothe_data$y))
+perf <- performance(pred2, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred3, measure="auc")
+
+auc3 <- perf_auc@y.values[[1]]
+auc3
+```
+
+```{r}
+library(ipred)
+set.seed(1234)
+
+model_tree_bag <- bagging(y ~ . , data=smothe_data, control = rpart.control(cp = 0.01, xval = 10))
+##Test the model on the validation data and store the predictions on both the test and validation data
+preds_tree_bag <- predict(model_tree_bag, test)
+
+confusionMatrix(preds_tree_bag, test$y)
+
+prob_train4 <- predict(model_tree_bag, type = "class")
+
+install.packages(ROCR)
+library(ROCR)
+
+pred4 <- prediction(as.numeric(prob_train4), as.numeric(smothe_data$y))
+perf <- performance(pred4, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred4, measure="auc")
+
+auc4 <- perf_auc@y.values[[1]]
+auc4
+```
+
+```{r}
+library(kernlab)
+## 
+## Attaching package: 'kernlab'
+## The following object is masked from 'package:ggplot2':
+## 
+##     alpha
+model_svm_th <- ksvm(y ~ . , smothe_data, kernel = "tanhdot")
+##  Setting default kernel parameters
+preds_svm_th <- predict(model_svm_th, test)
+
+confusionMatrix(preds_svm_th, test$y)
+
+prob_train5 <- predict(model_svm_th, type = "response")
+
+install.packages(ROCR)
+library(ROCR)
+
+pred5 <- prediction(as.numeric(prob_train5), as.numeric(smothe_data$y))
+perf <- performance(pred4, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred5, measure="auc")
+
+auc5<- perf_auc@y.values[[1]]
+auc5
+
+```
+
+```{r}
+model_svm_an <- ksvm(y ~ . , smothe_data, kernel = "anovadot")
+##  Setting default kernel parameters
+preds_svm_an <- predict(model_svm_an, test)
+
+confusionMatrix(preds_svm_an, test$y)
+
+prob_train6 <- predict(model_svm_an, type = "response")
+
+install.packages(ROCR)
+library(ROCR)
+
+pred6 <- prediction(as.numeric(prob_train6), as.numeric(smothe_data$y))
+perf <- performance(pred4, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred6, measure="auc")
+
+auc6<- perf_auc@y.values[[1]]
+auc6
+
+```
+
+```{r}
+library(ipred)
+## Warning: package 'ipred' was built under R version 3.3.3
+set.seed(1234)
+
+model_tree_bag <- bagging(y ~ . , data=smothe_data, control = rpart.control(cp = 0.01, xval = 10))
+##Test the model on the validation data and store the predictions on both the test and validation data
+preds_tree_bag <- predict(model_tree_bag, test)
+
+confusionMatrix(preds_tree_bag, test$y)
+
+prob_train7 <- predict(model_tree_bag, type = "class")
+
+install.packages(ROCR)
+library(ROCR)
+
+pred7 <- prediction(as.numeric(prob_train7), as.numeric(smothe_data$y))
+perf <- performance(pred4, measure="tpr", x.measure="fpr")
+plot(perf, col=rainbow(10), colorize=T, print.cutoffs.at=seq(0,1,0.05))
+perf_auc <- performance(pred7, measure="auc")
+
+auc7<- perf_auc@y.values[[1]]
+auc7
+
+```
+
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
